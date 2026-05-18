@@ -197,6 +197,6 @@ JOIN rides_rideevent dropoff
 JOIN rides_user u
     ON u.id_user = r.id_driver_id
 WHERE dropoff.created_at - pickup.created_at > INTERVAL '1 hour'
-GROUP BY month, driver_name
+GROUP BY month, driver
 ORDER BY month, trip_count DESC;
 ```
