@@ -1,0 +1,28 @@
+[project]
+name = "rides"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=6.0.5",
+    "django-environ>=0.13.0",
+    "djangorestframework>=3.17.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.13",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+exclude = ['migrations', '.venv', '.env']
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "DJ", "N"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["rides", "core"]
