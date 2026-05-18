@@ -7,7 +7,7 @@ A Django REST Framework API for managing rides, drivers, riders, and ride events
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/antonio-cipagauta/rides && cd rides
+git clone https://github.com/antonio-cipagauta/rides.git && cd rides
 uv sync
 ```
 
@@ -179,3 +179,24 @@ Ruff is configured in `pyproject.toml` with Django-specific rules enabled.
 Main challenge was optimizing the queries to reduce the number of database queries and improve performance. This required using a logger to count number of queries and see which queries were being executed, this made debugging and improving them easy.
 
 The design decision to extend AbstractUser was for authentication purposes, to restrict access only to admin users using token-based authentication.
+
+### BONUS SQL
+
+```sql
+SELECT
+    DATE_TRUNC('month', pickup.created_at)         AS month,
+    u.first_name || ' ' || u.last_name             AS driver,
+    COUNT(*)                                       AS trip_count
+FROM rides_ride r
+JOIN rides_rideevent pickup
+    ON pickup.id_ride_id = r.id_ride
+    AND pickup.description = 'Status changed to pickup'
+JOIN rides_rideevent dropoff
+    ON dropoff.id_ride_id = r.id_ride
+    AND dropoff.description = 'Status changed to dropoff'
+JOIN rides_user u
+    ON u.id_user = r.id_driver_id
+WHERE dropoff.created_at - pickup.created_at > INTERVAL '1 hour'
+GROUP BY month, driver_name
+ORDER BY month, trip_count DESC;
+```
