@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.db import connection
 from django.db.models import ExpressionWrapper, F, FloatField, Prefetch
 from django.utils import timezone
@@ -9,18 +10,19 @@ from rest_framework.filters import OrderingFilter
 
 from .filters import RideFilter
 from .models import Ride, RideEvent, User
-from .pagination import RidePagination
+from .pagination import BasePagination
 from .serializers import RideEventSerializer, RideSerializer, UserSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    pagination_class = BasePagination
 
 
 class RideViewSet(viewsets.ModelViewSet):
     serializer_class = RideSerializer
-    pagination_class = RidePagination
+    pagination_class = BasePagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = RideFilter
 
@@ -42,15 +44,7 @@ class RideViewSet(viewsets.ModelViewSet):
                 ref_lat = float(ref_lat)
                 ref_lng = float(ref_lng)
 
-                box_radius = 0.1  # Start at roughly 10km
-                local_count = queryset.filter(
-                    pickup_latitude__range=((ref_lat - box_radius), (ref_lat + box_radius)),
-                    pickup_longitude__range=((ref_lng - box_radius), (ref_lng + box_radius)),
-                ).count()
-
-                if local_count < 5:
-                    box_radius = 0.25  # if less than 5 results, expand to about 25km
-
+                box_radius = 0.25
                 queryset = queryset.filter(
                     pickup_latitude__range=((ref_lat - box_radius), (ref_lat + box_radius)),
                     pickup_longitude__range=((ref_lng - box_radius), (ref_lng + box_radius)),
@@ -72,15 +66,16 @@ class RideViewSet(viewsets.ModelViewSet):
         return queryset.order_by("-pickup_time")
 
     def dispatch(self, request, *args, **kwargs):
-        connection.queries_log.clear()
         response = super().dispatch(request, *args, **kwargs)
-        for index, query in enumerate(connection.queries, start=1):
-            sql_cleaned = " ".join(query["sql"].split())
-            print(f"SQL: {sql_cleaned}")
-        print(f"Total queries: {len(connection.queries)}")
+        if settings.DEBUG:
+            for query in connection.queries:
+                print(f"SQL: {' '.join(query['sql'].split())}")
+            print(f"Total queries: {len(connection.queries)}")
+            connection.queries_log.clear()
         return response
 
 
 class RideEventViewSet(viewsets.ModelViewSet):
-    queryset = RideEvent.objects.all()
+    queryset = RideEvent.objects.select_related("id_ride").all()
     serializer_class = RideEventSerializer
+    pagination_class = BasePagination

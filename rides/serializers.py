@@ -17,6 +17,8 @@ class RideEventSerializer(serializers.ModelSerializer):
 
 
 class RideSerializer(serializers.ModelSerializer):
+    rider_details = UserSerializer(source="id_rider", read_only=True)
+    driver_details = UserSerializer(source="id_driver", read_only=True)
     todays_ride_events = RideEventSerializer(many=True, read_only=True)
 
     class Meta:
@@ -26,6 +28,8 @@ class RideSerializer(serializers.ModelSerializer):
             "status",
             "id_rider",
             "id_driver",
+            "rider_details",
+            "driver_details",
             "pickup_latitude",
             "pickup_longitude",
             "dropoff_latitude",
