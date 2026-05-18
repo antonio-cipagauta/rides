@@ -27,11 +27,11 @@ class Ride(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="en-route")
     id_rider = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="rides_as_rider")
     id_driver = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="rides_as_driver")
-    pickup_latitude = models.FloatField()
-    pickup_longitude = models.FloatField()
+    pickup_latitude = models.FloatField(db_index=True)  # Indexing these for performance on sorting
+    pickup_longitude = models.FloatField(db_index=True)
     dropoff_latitude = models.FloatField()
     dropoff_longitude = models.FloatField()
-    pickup_time = models.DateTimeField()
+    pickup_time = models.DateTimeField(db_index=True)
 
     def __str__(self):
         return f"Ride {self.id_ride} - {self.status}"

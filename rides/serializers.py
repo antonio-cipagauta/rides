@@ -9,9 +9,17 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id_user", "role", "first_name", "last_name", "email", "phone_number"]
 
 
+class RideEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RideEvent
+        fields = ["id_ride_event", "id_ride", "description", "created_at"]
+        read_only_fields = ["created_at"]
+
+
 class RideSerializer(serializers.ModelSerializer):
     rider_details = UserSerializer(source="id_rider", read_only=True)
     driver_details = UserSerializer(source="id_driver", read_only=True)
+    ride_events = RideEventSerializer(source="rideevent_set", many=True, read_only=True)
 
     class Meta:
         model = Ride
@@ -27,18 +35,10 @@ class RideSerializer(serializers.ModelSerializer):
             "dropoff_latitude",
             "dropoff_longitude",
             "pickup_time",
+            "ride_events",
         ]
 
     def validate(self, data):
         if data.get("id_rider") == data.get("id_driver") and data.get("id_driver") is not None:
             raise serializers.ValidationError("The rider and driver cannot be the same")
         return data
-
-
-class RideEventSerializer(serializers.ModelSerializer):
-    ride_details = RideSerializer(source="id_ride", read_only=True)
-
-    class Meta:
-        model = RideEvent
-        fields = ["id_ride_event", "id_ride", "ride_details", "description", "created_at"]
-        read_only_fields = ["created_at"]
