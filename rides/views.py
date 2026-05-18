@@ -1,4 +1,8 @@
-from django.db.models import ExpressionWrapper, F, FloatField
+from datetime import timedelta
+
+from django.db import connection
+from django.db.models import ExpressionWrapper, F, FloatField, Prefetch
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
@@ -21,7 +25,14 @@ class RideViewSet(viewsets.ModelViewSet):
     filterset_class = RideFilter
 
     def get_queryset(self):
-        queryset = Ride.objects.prefetch_related("rideevent_set").all()
+        twenty_four_hours_ago = timezone.now() - timedelta(hours=24)
+        recent_events_prefetch = Prefetch(
+            "rideevent_set",
+            queryset=RideEvent.objects.filter(created_at__gte=twenty_four_hours_ago),
+            to_attr="todays_ride_events",
+        )
+
+        queryset = Ride.objects.select_related("id_rider", "id_driver").prefetch_related(recent_events_prefetch).all()
 
         ref_lat = self.request.query_params.get("ref_lat", None)
         ref_lng = self.request.query_params.get("ref_lng", None)
@@ -59,6 +70,15 @@ class RideViewSet(viewsets.ModelViewSet):
                 pass
 
         return queryset.order_by("-pickup_time")
+
+    def dispatch(self, request, *args, **kwargs):
+        connection.queries_log.clear()
+        response = super().dispatch(request, *args, **kwargs)
+        for index, query in enumerate(connection.queries, start=1):
+            sql_cleaned = " ".join(query["sql"].split())
+            print(f"SQL: {sql_cleaned}")
+        print(f"Total queries: {len(connection.queries)}")
+        return response
 
 
 class RideEventViewSet(viewsets.ModelViewSet):

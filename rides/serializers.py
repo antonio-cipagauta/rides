@@ -17,9 +17,7 @@ class RideEventSerializer(serializers.ModelSerializer):
 
 
 class RideSerializer(serializers.ModelSerializer):
-    rider_details = UserSerializer(source="id_rider", read_only=True)
-    driver_details = UserSerializer(source="id_driver", read_only=True)
-    ride_events = RideEventSerializer(source="rideevent_set", many=True, read_only=True)
+    todays_ride_events = RideEventSerializer(many=True, read_only=True)
 
     class Meta:
         model = Ride
@@ -28,14 +26,12 @@ class RideSerializer(serializers.ModelSerializer):
             "status",
             "id_rider",
             "id_driver",
-            "rider_details",
-            "driver_details",
             "pickup_latitude",
             "pickup_longitude",
             "dropoff_latitude",
             "dropoff_longitude",
             "pickup_time",
-            "ride_events",
+            "todays_ride_events",
         ]
 
     def validate(self, data):

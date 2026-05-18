@@ -6,13 +6,13 @@ import django
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from rides.models import Ride, RideEvent
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
 
+from rides.models import Ride, RideEvent  # noqa: E402
 
 User = get_user_model()
+
 
 def seed_database():
     print("Cleaning existing data...")
@@ -32,7 +32,7 @@ def seed_database():
             first_name="Rider",
             last_name=str(i),
             role="rider",
-            phone_number=f"+161755501{i:02d}"
+            phone_number=f"+161755501{i:02d}",
         )
         riders.append(rider)
 
@@ -43,7 +43,7 @@ def seed_database():
             first_name="Driver",
             last_name=str(i),
             role="driver",
-            phone_number=f"+161755502{i:02d}"
+            phone_number=f"+161755502{i:02d}",
         )
         drivers.append(driver)
 
@@ -61,7 +61,9 @@ def seed_database():
         rider = random.choice(riders)
         driver = random.choice(drivers)
 
-        random_hours_ago = random.randint(1, 72)
+        ride_duration_days = random.choice([1, 2, 3])
+        hours_per_step = {1: 12, 2: 18, 3: 24}[ride_duration_days]
+        random_hours_ago = random.randint(72, 144)
         base_time = timezone.now() - timedelta(hours=random_hours_ago)
 
         ride = Ride.objects.create(
@@ -72,42 +74,34 @@ def seed_database():
             pickup_longitude=p_lng,
             dropoff_latitude=d_lat,
             dropoff_longitude=d_lng,
-            pickup_time=base_time
+            pickup_time=base_time,
         )
 
-        # Simplified Step-by-Step Descriptions
-        event_time = base_time - timedelta(minutes=15)
-        RideEvent.objects.create(
-            id_ride=ride,
-            description="Ride requested.",
-            created_at=event_time
-        )
+        event_time = base_time
+        event1 = RideEvent.objects.create(id_ride=ride, description="Ride requested.")
+        event1.created_at = event_time
+        event1.save()
 
         if status in ["pickup", "en-route", "dropoff"]:
-            event_time += timedelta(minutes=4)
-            RideEvent.objects.create(
-                id_ride=ride,
-                description="Driver matched.",
-                created_at=event_time
-            )
+            event_time += timedelta(hours=hours_per_step)
+            event2 = RideEvent.objects.create(id_ride=ride, description="Driver matched.")
+            event2.created_at = event_time
+            event2.save()
 
         if status in ["en-route", "dropoff"]:
-            event_time += timedelta(minutes=6)
-            RideEvent.objects.create(
-                id_ride=ride,
-                description="Passenger picked up.",
-                created_at=event_time
-            )
+            event_time += timedelta(hours=hours_per_step)
+            event3 = RideEvent.objects.create(id_ride=ride, description="Passenger picked up.")
+            event3.created_at = event_time
+            event3.save()
 
         if status == "dropoff":
-            event_time += timedelta(minutes=12)
-            RideEvent.objects.create(
-                id_ride=ride,
-                description="Ride completed.",
-                created_at=event_time
-            )
+            event_time += timedelta(hours=hours_per_step)
+            event4 = RideEvent.objects.create(id_ride=ride, description="Ride completed.")
+            event4.created_at = event_time
+            event4.save()
 
     print(f"Seeding complete! Created 10 Riders, 10 Drivers, 50 Rides, and {RideEvent.objects.count()} simple events.")
+
 
 if __name__ == "__main__":
     seed_database()
