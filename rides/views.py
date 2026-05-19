@@ -43,8 +43,8 @@ class RideViewSet(viewsets.ModelViewSet):
             try:
                 ref_lat = float(ref_lat)
                 ref_lng = float(ref_lng)
+                box_radius = min(float(self.request.query_params.get("box_radius", 0.25)), 1.0)
 
-                box_radius = 0.25
                 queryset = queryset.filter(
                     pickup_latitude__range=((ref_lat - box_radius), (ref_lat + box_radius)),
                     pickup_longitude__range=((ref_lng - box_radius), (ref_lng + box_radius)),
@@ -60,7 +60,7 @@ class RideViewSet(viewsets.ModelViewSet):
                 return queryset.order_by("distance")
 
             except ValueError:
-                # Handle malformed coordinates, skip distance annotation
+                # Handle malformed coordinates or radius, skip distance annotation
                 pass
 
         return queryset.order_by("-pickup_time")
