@@ -103,10 +103,10 @@ GET /api/rides/?page=2&page_size=25
 
 ### Proximity Search
 
-Pass `ref_lat` and `ref_lng` to find rides near a location. Results are bounded to a ~25km box and sorted by distance (closest first).
+Pass `ref_lat` and `ref_lng` to find rides near a location. Results are bounded to a ~25km box by default, but with a `box_radius` parameter you can change the radius of the box up to ~111km and sorted by distance (closest first).
 
 ```
-GET /api/rides/?ref_lat=42.3557&ref_lng=-71.0656
+GET /api/rides/?ref_lat=42.3557&ref_lng=-71.0656&box_radius=0.5
 ```
 
 When no coordinates are provided, rides are sorted by `pickup_time` (most recent first).
